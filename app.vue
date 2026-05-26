@@ -1,15 +1,50 @@
 <template>
   <div class="video-container">
-    <iframe 
-      src="https://www.youtube.com/embed/lisrO0muALo?autoplay=1&mute=0&loop=1&playlist=lisrO0muALo&controls=0&showinfo=0&rel=0&modestbranding=1" 
-      frameborder="0" 
-      allow="autoplay; fullscreen" 
+    <iframe
+      id="yt-player"
+      :src="`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`"
+      frameborder="0"
+      allow="autoplay; fullscreen"
       allowfullscreen
     ></iframe>
-    <!-- overlay layer to catch clicks and prevent interaction with the video -->
-    <div class="overlay"></div>
+    <div v-if="muted" class="overlay" @click="unmute">
+      <div class="tap-hint">tap untuk nyalakan suara</div>
+    </div>
+    <div v-else class="overlay"></div>
   </div>
 </template>
+
+<script setup>
+const videoId = 'lisrO0muALo'
+const muted = ref(true)
+let player = null
+
+onMounted(() => {
+  const tag = document.createElement('script')
+  tag.src = 'https://www.youtube.com/iframe_api'
+  document.head.appendChild(tag)
+
+  window.onYouTubeIframeAPIReady = () => {
+    player = new window.YT.Player('yt-player', {
+      events: {
+        onReady: (e) => {
+          e.target.mute()
+          e.target.playVideo()
+        },
+      },
+    })
+  }
+})
+
+function unmute() {
+  if (player && player.unMute) {
+    player.unMute()
+    player.setVolume(100)
+    player.playVideo()
+    muted.value = false
+  }
+}
+</script>
 
 <style>
 body, html {
@@ -18,7 +53,7 @@ body, html {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #000; /* Black background to prevent white flashes */
+  background-color: #000;
 }
 
 .video-container {
@@ -33,9 +68,7 @@ body, html {
 iframe {
   width: 100vw;
   height: 100vh;
-  /* Add scale if you want it to behave like object-fit: cover and hide black bars */
-  /* transform: scale(1.3); */
-  pointer-events: none; /* Disables mouse events on the iframe */
+  pointer-events: none;
 }
 
 .overlay {
@@ -45,8 +78,28 @@ iframe {
   width: 100%;
   height: 100%;
   z-index: 10;
-  /* Catch all pointer events, effectively disabling the page */
-  pointer-events: auto; 
+  pointer-events: auto;
   background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 40px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.tap-hint {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
 }
 </style>
